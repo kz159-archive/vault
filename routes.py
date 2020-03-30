@@ -3,7 +3,8 @@ module describes route for web app
 """
 from aiohttp import web
 
-from helpers import get_free_yt_meta, store_yt_key, check_json, store_proxy, store_ig_session
+from helpers import (check_json, get_free_yt_meta, store_ig_session,
+                     store_proxy, store_yt_key, get_proxy_)
 from meta import Instruction
 
 async def get_yt(request):
@@ -38,6 +39,18 @@ async def post_proxy(request):
     store_proxy(data)
 
     return web.json_response({'status':'ok'})
+
+async def get_proxy(request):
+    """
+    function that returns
+    proxy info in json format
+    """
+    proxy_id = request.match_info.get('proxy_id')
+    if not proxy_id:
+        return web.Response(text=Instruction.proxy, status=401)
+    proxy = get_proxy_(proxy_id)
+
+    return web.json_response()
 
 async def post_ig(request):
     """

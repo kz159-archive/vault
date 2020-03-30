@@ -2,7 +2,7 @@
 helpers module which contains functions to work with dB
 '''
 from datetime import datetime
-from json import JSONDecodeError
+from json import JSONDecodeError, loads
 
 from pydantic import ValidationError
 from sqlalchemy import create_engine
@@ -12,11 +12,11 @@ from meta import YtApiKey, Proxy, IgSession, validations
 from config import DB_HOST, DB_PASSWORD, DB_PORT, DB_USER
 
 def get_db_dsn():
-    return f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}'
+    return f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_USER}'
 
 ENGINE = create_engine(get_db_dsn(), echo=True)
 SESSION_FACTORY = sessionmaker(bind=ENGINE)
-
+print(get_db_dsn())
 
 def store_yt_key(key):
     """
@@ -44,12 +44,12 @@ def store_ig_session(ig):
 def get_free_yt_meta():
     session = SESSION_FACTORY()
     ll = session.query(YtApiKey).filter_by(status='Ready').first()
-    return ll.as_dict
+    return loads(ll.__dict__)
 
-def get_proxy(fetch='one'):
+def get_proxy_(proxy_id):
     session = SESSION_FACTORY()
-    queue = session.query(Proxy).filter_by()
-    #if fetch == 'one'
+    queue = session.query(Proxy).filter_by(proxy_id)
+    return queue.as_dict
 
 async def check_json(request, service):
     """

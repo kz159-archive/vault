@@ -31,14 +31,12 @@ class YtApiKey(BASE):
     """
     youtube keys with status
     """
-    __tablename__ = 'yotube_keys'
+    __tablename__ = 'youtube_keys'
     key_id = Column(Integer, primary_key=True)
-    proxy_id = Column(String, primary_key=True)
-    key = Column(String, primary_key=True)
+    proxy_id = Column(String)
+    key = Column(String)
     status = Column(String, default="Ready") # Ready, Banned
     status_timestamp = Column(TIMESTAMP)
-    as_dict = {"key":key}
-
 
 class IgSession(BASE):
     """
