@@ -6,9 +6,9 @@ from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
+from config import DB_DSN
 
-ENGINE = create_engine('postgresql://postgres:password@localhost:5432',
-                       echo=True)
+ENGINE = create_engine(DB_DSN, echo=True)
 
 BASE = declarative_base()
 

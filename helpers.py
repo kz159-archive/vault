@@ -9,14 +9,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from meta import YtApiKey, Proxy, IgSession, validations
-from config import DB_HOST, DB_PASSWORD, DB_PORT, DB_USER
+from config import DB_HOST, DB_PASSWORD, DB_PORT, DB_USER, DB_DSN
 
-def get_db_dsn():
-    return f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_USER}'
-
-ENGINE = create_engine(get_db_dsn(), echo=True)
+ENGINE = create_engine(DB_DSN, echo=True)
 SESSION_FACTORY = sessionmaker(bind=ENGINE)
-print(get_db_dsn())
+
 
 def store_yt_key(key):
     """
@@ -44,11 +41,13 @@ def store_ig_session(ig):
 def get_free_yt_meta():
     session = SESSION_FACTORY()
     ll = session.query(YtApiKey).filter_by(status='Ready').first()
+    session.close() # А если у нас ничего нет?
     return loads(ll.__dict__)
 
 def get_proxy_(proxy_id):
     session = SESSION_FACTORY()
     queue = session.query(Proxy).filter_by(proxy_id)
+    session.close()
     return queue.as_dict
 
 async def check_json(request, service):

@@ -10,4 +10,5 @@ APP.add_routes([web.get('/yt', get_yt),
                 web.post('/ig', post_ig)])
 
 if __name__ == "__main__":
+    print('ready')
     web.run_app(APP)

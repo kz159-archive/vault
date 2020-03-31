@@ -1,0 +1,14 @@
+version: '3'
+services:
+  app:
+    image: "capturica/vault:latest" 
+    environment:
+      - DB_HOST=postgre
+    depends_on:
+      - postgre
+    ports:
+      - "8080:8080"
+  postgre:
+    environment: 
+      - POSTGRES_PASSWORD=password
+    image: "postgres:latest"
