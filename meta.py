@@ -3,16 +3,25 @@ module for describing tables in sa and
 pydantic basemodels
 """
 from pydantic import BaseModel
-from sqlalchemy import Column, Integer, String, TIMESTAMP
+from sqlalchemy import (TIMESTAMP, Column, ForeignKey, Integer, String,
+                        create_engine)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine
+from sqlalchemy.orm import relationship
+
 from config import DB_DSN
 
 ENGINE = create_engine(DB_DSN, echo=True)
 
 BASE = declarative_base()
 
-class Proxy(BASE):
+class Basev2(BASE):
+    __abstract__ = True
+
+    def as_dict(self):
+        '''returns row object as dict'''
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+class Proxy(Basev2):
     '''
     proxy table with required metadata
     '''
@@ -24,29 +33,34 @@ class Proxy(BASE):
     port = Column(Integer)
     user = Column(String)
     password = Column(String)
-    status = Column(String) # Ready, Unavailable, Banned, On_Delete
+    #status = Column(String, default='Check_need') # Ready, Unavailable,
+    #                                              # Banned, Checking
 
 
-class YtApiKey(BASE):
+class YtApiKey(Basev2):
     """
     youtube keys with status
     """
-    __tablename__ = 'youtube_keys'
+    __tablename__ = 'yt_key'
     key_id = Column(Integer, primary_key=True)
-    proxy_id = Column(String)
+    proxy_id = Column(Integer, default="1")
     key = Column(String)
-    status = Column(String, default="Ready") # Ready, Banned
+    status = Column(String, default="Ready") # Ready, Banned, Locked
     status_timestamp = Column(TIMESTAMP)
 
-class IgSession(BASE):
+
+class IgSession(Basev2):
     """
     instagram sessions
     """
     __tablename__ = 'instagram_sessions'
     session_id = Column(Integer, primary_key=True)
+    proxy_id = Column(Integer)
     session_name = Column(String)
     session_pass = Column(String)
-    proxy_id = Column(String, primary_key=True)
+    status = Column(String, default="Proxy_waiting") # Ready, Banned, Proxy_waiting
+    status_timestamp = Column(String)
+
 
 class ProxyValid(BaseModel):
     """
@@ -88,4 +102,4 @@ validations = {'proxy': ProxyValid,
                'ig': IgSessionValid,
                'yt': YtApiKeyValid}
 
-BASE.metadata.create_all(ENGINE)
+BASE.metadata.create_all(ENGINE) # Alembic?

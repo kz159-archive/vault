@@ -1,6 +1,7 @@
 """
 module describes route for web app
 """
+import json
 from aiohttp import web
 
 from helpers import (check_json, get_free_yt_meta, store_ig_session,
@@ -11,7 +12,9 @@ async def get_yt(request):
     """
     get method for getting youtube metadata
     """
-    data = get_free_yt_meta()
+    data = dict(get_free_yt_meta().items())
+    if not data:
+        data = {'status': 'NO_KEYS_AVAILABLE'}
     return web.json_response(data=data)
 
 async def post_yt(request):
@@ -23,9 +26,13 @@ async def post_yt(request):
     if not data:
         return web.Response(text=Instruction.yt, status=401)
 
-    store_yt_key(data.key)
-
-    return web.json_response({'status':'ok'})
+    row = store_yt_key(data.key)
+    if row:
+        return web.json_response({'status':'ok',
+                                  'key_id': row})
+    else:
+        return web.json_response({"status":"error",
+                                   "message":"NO_PROXY_AVAIL"}, status=502)
 
 async def post_proxy(request):
     """
@@ -48,7 +55,7 @@ async def get_proxy(request):
     proxy_id = request.match_info.get('proxy_id')
     if not proxy_id:
         return web.Response(text=Instruction.proxy, status=401)
-    proxy = get_proxy_(proxy_id)
+    proxy = get_proxy_(proxy_id).as_dict()
 
     return web.json_response()
 
