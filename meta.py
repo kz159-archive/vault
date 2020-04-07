@@ -2,11 +2,13 @@
 module for describing tables in sa and
 pydantic basemodels
 """
+from typing import Optional
+from enum import Enum, IntEnum
+
 from pydantic import BaseModel
-from sqlalchemy import (TIMESTAMP, Column, ForeignKey, Integer, String,
+from sqlalchemy import (TIMESTAMP, Column, Integer, String,
                         create_engine)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
 
 from config import DB_DSN
 
@@ -53,13 +55,13 @@ class IgSession(Basev2):
     """
     instagram sessions
     """
-    __tablename__ = 'instagram_sessions'
+    __tablename__ = 'ig_session'
     session_id = Column(Integer, primary_key=True)
     proxy_id = Column(Integer)
     session_name = Column(String)
     session_pass = Column(String)
-    status = Column(String, default="Proxy_waiting") # Ready, Banned, Proxy_waiting
-    status_timestamp = Column(String)
+    status = Column(String, default="Ready") # Ready, Banned, Locked
+    status_timestamp = Column(TIMESTAMP)
 
 
 class ProxyValid(BaseModel):
@@ -77,6 +79,13 @@ class YtApiKeyValid(BaseModel):
     YouTube validation for DTO
     """
     key: str
+    action: str
+    status: Optional[str]
+
+
+class StatusEnum(str, Enum):
+    banned = Optional['banned']
+    ready = 'ready'
 
 
 class IgSessionValid(BaseModel):
