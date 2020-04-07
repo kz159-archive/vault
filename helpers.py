@@ -66,18 +66,17 @@ def get_free_yt_meta():
     # update where yt api key returning
     now = datetime.utcnow()
     two_hours_ago = now + timedelta(hours=1)
-    session = SESSION_FACTORY()
-    where = sa.or_(YtApiKey.status == 'Ready',
-                   sa.and_(YtApiKey.status == "Locked", sa.func.coalesce(
-                       YtApiKey.status_timestamp < two_hours_ago, True)))
 
-    ll = update(YtApiKey).values(status='Locked').\
-        where(where).returning(YtApiKey.key_id,
-                               YtApiKey.key,
-                               YtApiKey.proxy_id)
-    with ENGINE.connect() as con:
-        result = con.execute(ll).fetchone()
-        return result
+    where = (YtApiKey.status == 'Ready') | ((YtApiKey.status == 'Blocked') & (YtApiKey.status_timestamp < two_hours_ago))
+    sel = sa.select([YtApiKey.key_id]).where(where).limit(1)
+    where = YtApiKey.key_id.in_(sel)
+    ll = update(YtApiKey).values(status='Locked', status_timestamp=func.now()).\
+         where(where).returning(YtApiKey.key_id,
+                                YtApiKey.key,
+                                YtApiKey.proxy_id)
+    with ENGINE.begin() as con:
+        ll = con.execute(ll).fetchone()
+    return ll
 
 def get_free_ig_meta():
     # Сначала мы выбираем прокси через update давая ему статус locked
