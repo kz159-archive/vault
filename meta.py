@@ -3,7 +3,7 @@ module for describing tables in sa and
 pydantic basemodels
 """
 from typing import Optional
-from enum import Enum, IntEnum
+from enum import Enum
 
 from pydantic import BaseModel
 from sqlalchemy import (TIMESTAMP, Column, Integer, String,
@@ -72,6 +72,7 @@ class ProxyValid(BaseModel):
     port: str
     user: str
     password: str
+    action: str
 
 
 class YtApiKeyValid(BaseModel):
@@ -81,11 +82,7 @@ class YtApiKeyValid(BaseModel):
     key: str
     action: str
     status: Optional[str]
-
-
-class StatusEnum(str, Enum):
-    banned = Optional['banned']
-    ready = 'ready'
+    key_id: Optional[int]
 
 
 class IgSessionValid(BaseModel):
@@ -94,7 +91,14 @@ class IgSessionValid(BaseModel):
     """
     session_name: str
     session_pass: str
+    action: str
+    status: Optional[str]
+    session_id: Optional[int]
 
+
+class StatusEnum(str, Enum):
+    banned = Optional['banned']
+    ready = 'ready'
 
 class Instruction:
     """
@@ -106,9 +110,5 @@ class Instruction:
     yt = f"""{beg}ютуб инструкция """
     ig = f"""{beg}ig instruction """
     proxy = f"""{beg}proxy instruction """
-
-validations = {'proxy': ProxyValid,
-               'ig': IgSessionValid,
-               'yt': YtApiKeyValid}
 
 BASE.metadata.create_all(ENGINE) # Alembic?

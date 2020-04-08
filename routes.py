@@ -8,8 +8,8 @@ from pydantic import ValidationError
 
 from helpers import (get_free_ig_meta, get_free_yt_meta,
                      store_ig_session, store_proxy, store_yt_key,
-                     update_yt_key_status, get_proxy_)
-from meta import Instruction, YtApiKeyValid, ProxyValid
+                     update_yt_key_status, get_proxy_, update_ig_session_status)
+from meta import Instruction, YtApiKeyValid, ProxyValid, IgSessionValid
 
 
 async def get_yt(request):
@@ -63,9 +63,9 @@ async def post_yt(request):
                                       'key_id': row})
 
     elif data.action == 'update':
-        if update_yt_key_status(data.key, data.status):
+        if update_yt_key_status(data):
             return web.Response()
-        return web.HTTPError()
+        return web.HTTPBadRequest()
 
     return web.json_response({"status":"error",
                               "message":"NO_PROXY_AVAIL"}, status=502)
@@ -75,15 +75,22 @@ async def post_ig(request):
     function gets ig creds from
     request and stores it in db
     """
-    data = await check_json(request, service='ig')
-    if not data:
-        return web.Response(text=Instruction.ig, status=401)
+    try:
+        data = await request.json()
+        data = IgSessionValid(**data)
+    except (JSONDecodeError, ValidationError):
+        return web.json_response(data={'Ты':'не прав'})
+    
+    if data.action == 'store':
+        row = store_ig_session(data)
+        if row:
+            return web.json_response({'status':'ok',
+                                      'session_id': row})
 
-    row = store_ig_session(data)
-    if row:
-        return web.json_response({'status':'ok',
-                                  'session_id': row})
+    if data.action == 'update':
+        if update_ig_session_status(data):
+            return web.Response()
+        return web.HTTPError()
 
     return web.json_response({"status":"error",
                               "message":"NO_PROXY_AVAIL"}, status=502)
-

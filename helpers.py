@@ -14,7 +14,6 @@ from meta import IgSession, Proxy, YtApiKey
 ENGINE = create_engine(DB_DSN, echo=True)
 SESSION_FACTORY = sessionmaker(bind=ENGINE)
 
-
 def store_yt_key(key): # "with" or "session" style?
     """
     Store yotube api key in db
@@ -33,15 +32,15 @@ def store_yt_key(key): # "with" or "session" style?
     else:
         return None
 
-def store_ig_session(ig):
+def store_ig_session(data):
     """
     store instagram session meta
     """
     session = SESSION_FACTORY()
     avail_proxy = session.query(Proxy).filter_by(session_id=None).first()
     if avail_proxy:
-        instagram_queue = IgSession(session_name=ig.session_name,
-                                    session_pass=ig.session_pass,
+        instagram_queue = IgSession(session_name=data.session_name,
+                                    session_pass=data.session_pass,
                                     proxy_id=avail_proxy.proxy_id,
                                     status_timestamp=func.now())
         session.add(instagram_queue)
@@ -49,8 +48,7 @@ def store_ig_session(ig):
         avail_proxy.session_id = instagram_queue.session_id
         session.commit()
         return instagram_queue.session_id
-    else:
-        return None
+    return None
 
 def store_proxy(proxy):
     queue = Proxy.__table__.insert().values(address=proxy.address,
@@ -61,14 +59,13 @@ def store_proxy(proxy):
         conn.execute(queue)
 
 def get_free_yt_meta():
-    # update where yt api key returning
     now = datetime.utcnow()
-    two_hours_ago = now + timedelta(hours=1)
+    day_ago = now + timedelta(hours=25)
     j = sa.join(YtApiKey, Proxy, YtApiKey.proxy_id == Proxy.proxy_id)
 
     where = (YtApiKey.status == 'Ready') | \
             ((YtApiKey.status == 'Blocked') & \
-            (YtApiKey.status_timestamp < two_hours_ago))
+            (YtApiKey.status_timestamp < day_ago))
     sel = sa.select([YtApiKey.key_id]).where(where).limit(1)
     yt_id = YtApiKey.key_id.in_(sel)
     upd_sttm = update(YtApiKey).values(status='Locked',
@@ -78,7 +75,8 @@ def get_free_yt_meta():
     with ENGINE.begin() as con:
         result = con.execute(upd_sttm).fetchone()
         if result:
-            out = sa.select([YtApiKey.key,
+            out = sa.select([YtApiKey.key_id,
+                             YtApiKey.key,
                              Proxy.address,
                              Proxy.user,
                              Proxy.password,
@@ -88,19 +86,31 @@ def get_free_yt_meta():
     return result
 
 def get_free_ig_meta():
-    # Сначала мы выбираем прокси через update давая ему статус locked
-    statеment = ('SELECT ig_session.session_id, session_name, session_pass, address, port, "user", password'
-                 " FROM ig_session "
-                 "INNER JOIN proxy on proxy.session_id = ig_session.session_id "
-                 "where status='Ready' or "
-                 "(status='Banned' and status_timestamp "
-                 "< NOW() - INTERVAL '25 hours') "
-                 "order by status_timestamp;")
-    with ENGINE.connect() as con:
-        result = con.execute(statеment).fetchone()
-        con.execute(update(IgSession).\
-            where(IgSession.session_id == result.session_id).\
-            values(status='Locked', status_timestamp=func.now()))
+    now = datetime.utcnow()
+    day_ago = now + timedelta(hours=25)
+    j = sa.join(IgSession, Proxy, IgSession.proxy_id == Proxy.proxy_id)
+
+    where = (IgSession.status == 'Ready') | \
+            ((IgSession.status == 'Blocked') & \
+            (IgSession.status_timestamp < day_ago))
+    sel_sttm = sa.select([IgSession.session_id]).where(where).limit(1)
+    ses_id = IgSession.session_id.in_(sel_sttm)
+    upd_sttm = update(IgSession).values(status='Locked',
+                                        status_timestamp=func.now()).\
+        where(ses_id).returning(IgSession.session_id)
+
+    with ENGINE.begin() as con:
+        result = con.execute(upd_sttm).fetchone()
+        if result:
+            out = sa.select([IgSession.session_id,
+                             IgSession.session_name,
+                             IgSession.session_pass,
+                             Proxy.address,
+                             Proxy.user,
+                             Proxy.password,
+                             Proxy.port]).select_from(j).\
+                             where(IgSession.session_id == result.session_id)
+            result = con.execute(out).fetchone()
         return result
 
 def get_proxy_(proxy_id):
@@ -109,22 +119,26 @@ def get_proxy_(proxy_id):
     session.close()
     return queue.as_dict()
 
-def update_yt_key_status(key, status):
+def update_yt_key_status(data):
     session = SESSION_FACTORY()
-    q = session.query(YtApiKey).filter_by(key=key).first()
-    if q:
-        q.status = status
+    yt_key = session.query(YtApiKey).filter_by(key_id=data.key_id).first()
+    if yt_key:
+        yt_key.status = data.status
+        yt_key.status_timestamp = func.now()
         session.commit()
         return True
-    logging.error(f'Theres something wrong with db, the key is {key}')
+    logging.error(f'Theres something wrong with db, the key is {data.key_id}')
     return False
 
-def release_ig_session(ses, status):
+def update_ig_session_status(data):
     session = SESSION_FACTORY()
-    q = session.query(IgSession).filter_by(session_id=ses).first()
-    if q:
-        q.status = status
+    ig_session = session.query(IgSession).\
+        filter_by(session_id=data.session_id).first()
+    if ig_session:
+        ig_session.status = data.status
+        ig_session.status_timestamp = func.now()
         session.commit()
         return True
-    logging.error(f'Theres something wrong with db, the key is {ses}')
+    logging.error(
+        f'Theres something wrong with db, the key is {data.session_id}')
     return False
