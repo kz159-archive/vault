@@ -1,17 +1,15 @@
 '''
 helpers module which contains functions to work with dB
 '''
-from datetime import datetime, timedelta
-from json import JSONDecodeError
 import logging
+from datetime import datetime, timedelta
 
-from pydantic import ValidationError
-from sqlalchemy import create_engine, update, func
-from sqlalchemy.orm import sessionmaker
 import sqlalchemy as sa
+from sqlalchemy import create_engine, func, update
+from sqlalchemy.orm import sessionmaker
 
-from meta import YtApiKey, Proxy, IgSession, validations
 from config import DB_DSN
+from meta import IgSession, Proxy, YtApiKey
 
 ENGINE = create_engine(DB_DSN, echo=True)
 SESSION_FACTORY = sessionmaker(bind=ENGINE)
@@ -28,7 +26,7 @@ def store_yt_key(key): # "with" or "session" style?
                                proxy_id=avail_proxy.proxy_id,
                                status_timestamp=func.now())
         session.add(youtube_key)
-        session.commit()  # RE DO Что если ключ будет доступен а прокси еще нет?
+        session.commit()
         avail_proxy.key_id = youtube_key.key_id
         session.commit()
         return youtube_key.key_id
@@ -66,17 +64,28 @@ def get_free_yt_meta():
     # update where yt api key returning
     now = datetime.utcnow()
     two_hours_ago = now + timedelta(hours=1)
+    j = sa.join(YtApiKey, Proxy, YtApiKey.proxy_id == Proxy.proxy_id)
 
-    where = (YtApiKey.status == 'Ready') | ((YtApiKey.status == 'Blocked') & (YtApiKey.status_timestamp < two_hours_ago))
+    where = (YtApiKey.status == 'Ready') | \
+            ((YtApiKey.status == 'Blocked') & \
+            (YtApiKey.status_timestamp < two_hours_ago))
     sel = sa.select([YtApiKey.key_id]).where(where).limit(1)
-    where = YtApiKey.key_id.in_(sel)
-    ll = update(YtApiKey).values(status='Locked', status_timestamp=func.now()).\
-         where(where).returning(YtApiKey.key_id,
-                                YtApiKey.key,
-                                YtApiKey.proxy_id)
+    yt_id = YtApiKey.key_id.in_(sel)
+    upd_sttm = update(YtApiKey).values(status='Locked',
+                                       status_timestamp=func.now()).\
+         where(yt_id).returning(YtApiKey.key_id)
+
     with ENGINE.begin() as con:
-        ll = con.execute(ll).fetchone()
-    return ll
+        result = con.execute(upd_sttm).fetchone()
+        if result:
+            out = sa.select([YtApiKey.key,
+                             Proxy.address,
+                             Proxy.user,
+                             Proxy.password,
+                             Proxy.port]).select_from(j).\
+                             where(YtApiKey.key_id == result.key_id)
+            result = con.execute(out).fetchone()
+    return result
 
 def get_free_ig_meta():
     # Сначала мы выбираем прокси через update давая ему статус locked

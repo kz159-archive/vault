@@ -18,8 +18,6 @@ async def get_yt(request):
     """
     try:
         data = dict(get_free_yt_meta().items())
-        proxy = dict(get_proxy_(data['proxy_id'])) # without join
-        data.update(proxy)
     except AttributeError:
         data = {'status': 'NO_KEYS_AVAILABLE'}
     return web.json_response(data=data)
