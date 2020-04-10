@@ -2,7 +2,6 @@
 module for describing tables in sa and
 pydantic basemodels
 """
-from typing import Optional
 from enum import Enum
 
 from pydantic import BaseModel
@@ -17,6 +16,9 @@ ENGINE = create_engine(DB_DSN, echo=True)
 BASE = declarative_base()
 
 class Basev2(BASE):
+    """
+    adds function for sqlalchemy
+    """
     __abstract__ = True
 
     def as_dict(self):
@@ -65,6 +67,9 @@ class IgSession(Basev2):
 
 
 class StatusEnum(str, Enum):
+    """
+    class for status updates
+    """
     ready = 'Ready'
     blocked = 'Blocked'
 

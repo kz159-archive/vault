@@ -101,6 +101,9 @@ async def post_ig_store(request):
                               "message":"NO_PROXY_AVAIL"}, status=502)
 
 async def post_ig_update(request):
+    """
+    update ig session using session id
+    """
     try:
         data = await request.json()
         data = IgSessionUpdate(**data)

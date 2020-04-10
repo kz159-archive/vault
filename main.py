@@ -1,3 +1,6 @@
+"""
+Main launcher of app
+"""
 from aiohttp import web
 
 from routes import (get_ig, get_yt, post_ig_store, post_ig_update, post_proxy,

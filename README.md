@@ -24,7 +24,6 @@ docker-compose up
 ```
 POST /proxy
 {
-    "action":"store",
     "address":"1.1.1.1",
     "port": "8000",
     "user": "USERNAME",
@@ -35,9 +34,8 @@ POST /proxy
 # Добавление инстаграмм сессий
 
 ```
-POST /ig
+POST /ig/store
 {
-    "action":"store",
     "session_name":"test_user",
     "session_password": "password_for_test_user",
 }
@@ -46,9 +44,8 @@ POST /ig
 # Добавление ютуб ключей
 
 ```
-POST /ig
+POST /ig/store
 {
-    "action":"store",
     "key":"12345678910ABCDEFGHIJK"
 }
 ```
@@ -92,22 +89,17 @@ GET /yt >
 
 После завершения работы программы или блокировки сервисом ключа  
 стоит обновить статус ключа на соответсвующий
-Так как этот функционал не реализован полностью необходимо  
-так же указывать остальную мету  
-типа key, session_name, session_pass
 
 ```
-POST /yt
+POST /yt/update
 {
-    "action": "update",
     "key_id": 1,
     "status": "Blocked" # "Ready"
 }
 ```
 ```
-POST /ig
+POST /ig/update
 {
-    "action": "update"
     "session_id": 1,
     "status": "Blocked" # "Ready"
 }
