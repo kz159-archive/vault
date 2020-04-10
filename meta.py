@@ -64,19 +64,8 @@ class IgSession(Basev2):
     status_timestamp = Column(TIMESTAMP)
 
 
-class ActionEnum(str, Enum):
-    update = 'update'
-    store = 'store'
 
-
-class Action(BaseModel):
-    """
-    Base class for api validation
-    """
-    action: ActionEnum
-
-
-class ProxyValid(Action):
+class ProxyValid(BaseModel):
     """
     Proxy validation for DTO
     """
@@ -86,20 +75,20 @@ class ProxyValid(Action):
     password: str
 
 
-class YtApiKeyStore(Action):
+class YtApiKeyStore(BaseModel):
     """
     YouTube key store validation for DTO
     """
     key: str
 
-class YtApiKeyUpdate(Action):
+class YtApiKeyUpdate(BaseModel):
     """
     Youtube key status update validation
     """
     key_id: str
     status: str
 
-class IgSessionStore(Action):
+class IgSessionStore(BaseModel):
     """
     Instagram validation store check for DTO
     """
@@ -107,7 +96,7 @@ class IgSessionStore(Action):
     session_pass: str
 
 
-class IgSessionUpdate(Action):
+class IgSessionUpdate(BaseModel):
     """
     Instagram validation updsate check
     """
