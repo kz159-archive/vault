@@ -64,6 +64,10 @@ class IgSession(Basev2):
     status_timestamp = Column(TIMESTAMP)
 
 
+class StatusEnum(str, Enum):
+    ready = 'Ready'
+    blocked = 'Blocked'
+
 
 class ProxyValid(BaseModel):
     """
@@ -81,12 +85,13 @@ class YtApiKeyStore(BaseModel):
     """
     key: str
 
+
 class YtApiKeyUpdate(BaseModel):
     """
     Youtube key status update validation
     """
     key_id: str
-    status: str
+    status: StatusEnum
 
 class IgSessionStore(BaseModel):
     """
@@ -101,7 +106,7 @@ class IgSessionUpdate(BaseModel):
     Instagram validation updsate check
     """
     session_id: int
-    status: str
+    status: StatusEnum
 
 
 class Instruction:

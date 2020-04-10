@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from helpers import (get_free_ig_meta, get_free_yt_meta, store_ig_session,
                      store_proxy, store_yt_key, update_ig_session_status,
                      update_yt_key_status)
-from meta import (Action, IgSessionStore, IgSessionUpdate, ProxyValid,
+from meta import (IgSessionStore, IgSessionUpdate, ProxyValid,
                   YtApiKeyStore, YtApiKeyUpdate)
 
 
