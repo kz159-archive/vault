@@ -64,7 +64,19 @@ class IgSession(Basev2):
     status_timestamp = Column(TIMESTAMP)
 
 
-class ProxyValid(BaseModel):
+class ActionEnum(str, Enum):
+    update = 'update'
+    store = 'store'
+
+
+class Action(BaseModel):
+    """
+    Base class for api validation
+    """
+    action: ActionEnum
+
+
+class ProxyValid(Action):
     """
     Proxy validation for DTO
     """
@@ -72,33 +84,36 @@ class ProxyValid(BaseModel):
     port: str
     user: str
     password: str
-    action: str
 
 
-class YtApiKeyValid(BaseModel):
+class YtApiKeyStore(Action):
     """
-    YouTube validation for DTO
+    YouTube key store validation for DTO
     """
     key: str
-    action: str
-    status: Optional[str]
-    key_id: Optional[int]
 
-
-class IgSessionValid(BaseModel):
+class YtApiKeyUpdate(Action):
     """
-    Instagram validation for DTO
+    Youtube key status update validation
+    """
+    key_id: str
+    status: str
+
+class IgSessionStore(Action):
+    """
+    Instagram validation store check for DTO
     """
     session_name: str
     session_pass: str
-    action: str
-    status: Optional[str]
-    session_id: Optional[int]
 
 
-class StatusEnum(str, Enum):
-    banned = Optional['banned']
-    ready = 'ready'
+class IgSessionUpdate(Action):
+    """
+    Instagram validation updsate check
+    """
+    session_id: int
+    status: str
+
 
 class Instruction:
     """
