@@ -22,10 +22,10 @@ assert DB_USER
 
 DB_PASSWD = os.getenv('DB_PASSWORD', 'vladandothers')
 
-DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_HOST = os.getenv('DB_HOST', '10.10.0.6')
 assert DB_HOST
 
-DB_PORT = os.getenv('DB_PORT', '2000')
+DB_PORT = os.getenv('DB_PORT', '5432')
 assert DB_PORT
 
 DB_NAME = os.getenv('DB_NAME', 'cap')

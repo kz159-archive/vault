@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from aiohttp_security import AbstractAuthorizationPolicy
-from gpn_db.models import backend_user
-from gpn_db.models import permission as permission_table
+from capturica_db.models import backend_user
+from capturica_db.models import permission as permission_table
 from passlib.hash import sha1_crypt
 
 

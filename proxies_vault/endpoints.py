@@ -5,7 +5,7 @@ from capturica_db.models import *
 
 from helpers import *
 from aiohttp import web
-
+from datetime import datetime
 
 async def get_free_ig_session(request: web.Request) -> web.Response:
     """
