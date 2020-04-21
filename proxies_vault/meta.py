@@ -9,7 +9,7 @@ from sqlalchemy import (TIMESTAMP, Column, Integer, String,
                         create_engine)
 from sqlalchemy.ext.declarative import declarative_base
 
-from config import DB_DSN
+from proxies_vault.config import DB_DSN
 
 ENGINE = create_engine(DB_DSN, echo=True)
 

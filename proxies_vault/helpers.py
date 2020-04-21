@@ -8,8 +8,8 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine, func, update
 from sqlalchemy.orm import sessionmaker
 
-from config import DB_DSN
-from meta import IgSession, Proxy, YtApiKey
+from proxies_vault.config import DB_DSN
+from proxies_vault.meta import IgSession, Proxy, YtApiKey
 
 ENGINE = create_engine(DB_DSN, echo=True)
 SESSION_FACTORY = sessionmaker(bind=ENGINE)

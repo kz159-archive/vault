@@ -3,8 +3,8 @@ Main launcher of app
 """
 from aiohttp import web
 
-from routes import (get_ig, get_yt, post_ig_store, post_ig_update, post_proxy,
-                    post_yt_store, post_yt_update)
+from proxies_vault.routes import (get_ig, get_yt, post_ig_store, post_ig_update, post_proxy,
+                                  post_yt_store, post_yt_update)
 
 APP = web.Application()
 APP.add_routes([web.get('/yt', get_yt),
