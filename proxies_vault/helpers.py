@@ -6,13 +6,144 @@ from datetime import datetime, timedelta
 
 import sqlalchemy as sa
 from sqlalchemy import create_engine, func, update
-from sqlalchemy.orm import sessionmaker
-
-from proxies_vault.config import DB_DSN
 from proxies_vault.meta import IgSession, Proxy, YtApiKey
 
-ENGINE = create_engine(DB_DSN, echo=True)
-SESSION_FACTORY = sessionmaker(bind=ENGINE)
+import csv
+import datetime
+import io
+import typing as tp
+
+from aiohttp import web
+from aiopg.sa.result import RowProxy
+from multidict import MultiDict
+from xlsxwriter import Workbook
+
+from config import log
+
+
+def parse_results(result: tp.List[RowProxy]) -> tp.List[tp.Dict]:
+    json_result = []
+    if result:
+        for row in result:
+            result_dict = {}
+            for item in row:
+                if isinstance(row[item], (datetime.datetime, datetime.date)):
+                    result_dict[item] = row[item].isoformat()
+                else:
+                    result_dict[item] = row[item]
+            json_result.append(result_dict)
+    return json_result
+
+
+def sentiment_match(sentiment=None):
+    sentiment_list = {
+        'positive': 'positive',
+        'negative': 'negative'
+    }
+
+    if sentiment:
+        try:
+            brand = sentiment_list[sentiment]
+        except KeyError:
+            log.error('Неверно указана тональность')
+            raise web.HTTPBadRequest(text='Неверно указана тональность')
+
+    return sentiment
+
+
+def brand_match(brand=None):
+    brand_list = {
+        'megafon': 'мегафон',
+        'beeline': 'билайн',
+        'mts': 'мтс',
+        'tele2': 'теле2'
+    }
+
+    if brand:
+        try:
+            brand = brand_list[brand]
+        except KeyError:
+            log.error('Неверно указан бренд')
+            raise web.HTTPBadRequest(text='Неверно указан бренд')
+
+    return brand
+
+
+def check_platform(platform):
+    platforms = ['youtube', 'instagram', 'all', None]
+
+    if platform not in platforms:
+        log.error('Неверно указана платформа')
+        raise web.HTTPBadRequest(text='Неверно указана платформа')
+
+
+def check_file_format(file_format):
+    existing_formats = ['xlsx', 'csv', None]
+
+    if file_format not in existing_formats:
+        log.error('Неверно указан формат файла')
+        raise web.HTTPBadRequest(text='Неверно указан формат файла')
+
+
+def csv_dict2bytes(data: tp.List[dict]):
+    """
+    Преобразует список словарей в BytesIO объект с представлением .csv файла
+
+    :param data: список словарей
+    :return: Битовый поток
+    """
+    sio = io.StringIO()
+    csv_writer = csv.writer(sio)
+
+    for i, data_item in enumerate(data):
+        if i == 0:
+            header = data_item.keys()
+            csv_writer.writerow(header)
+        csv_writer.writerow(data_item.values())
+    bio = io.BytesIO(sio.getvalue().encode('utf8'))
+    return bio
+
+
+def xlsx_dict2bytes(data: tp.List[dict]):
+    """
+    Преобразует список словарей в BytesIO объект с представлением .xlsx файла
+
+    :param data: список словарей
+    :return: Битовый поток
+    """
+    bio = io.BytesIO()
+    xlsx_workbook = Workbook(bio, {'in_memory': True})
+    xlsx_worksheet = xlsx_workbook.add_worksheet()
+
+    for row_count, data_item in enumerate(data):
+        if row_count == 0:
+            header = data_item.keys()
+            xlsx_worksheet.write_row(row=row_count, col=0, data=header)
+        xlsx_worksheet.write_row(row=row_count + 1, col=0,
+                                 data=data_item.values())
+    xlsx_workbook.close()
+    bio.seek(0)
+
+    return bio.read()
+
+
+def file_response(file_format, data, file_name):
+    if file_format == 'csv':
+        return web.Response(
+            headers=MultiDict({'Content-Disposition':
+                                   f'Attachment; filename={file_name}.csv',
+                               'Content-Type':
+                                   'text/csv'}),
+            body=csv_dict2bytes(data))
+    if file_format == 'xlsx':
+        return web.Response(
+            headers=MultiDict({
+                'Content-Disposition': f'Attachment; filename={file_name}.xlsx',
+                'Content-Type': 'application/'
+                                'vnd.openxmlformats-officedocument'
+                                '.spreadsheetml.sheet'}),
+            body=xlsx_dict2bytes(data))
+
 
 def store_yt_key(key): # "with" or "session" style?
     """
