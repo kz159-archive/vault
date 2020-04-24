@@ -13,11 +13,12 @@ from routes import setup_routes
 
 
 class Server:
-    def __init__(self):
+    def __init__(self, port):
         self._app = web.Application()
         self._app.on_startup.extend([init_db])
         self._app.on_shutdown.extend([close_db])
         setup_routes(self._app)
+        self.port = port
 
         aiohttp_session.setup(
             app=self._app,
@@ -45,4 +46,4 @@ class Server:
             yield connection
 
     def run(self):
-        web.run_app(self._app, port=80)
+        web.run_app(self._app, port=self.port)

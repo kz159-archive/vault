@@ -1,20 +1,23 @@
 '''
 helpers module which contains functions to work with dB
 '''
+# import csv
+import datetime
+# import io
+import typing as tp
 # import logging
-from datetime import datetime, timedelta
+#from datetime import datetime, timedelta
+from json import JSONDecodeError
+
+from aiohttp import web
+from aiopg.sa.result import RowProxy
+from pydantic import ValidationError, BaseModel
 
 # import sqlalchemy as sa
 # from sqlalchemy import create_engine, func, update
 # from proxies_vault.meta import IgSession, Proxy, YtApiKey
 
-# import csv
-import datetime
-# import io
-import typing as tp
 
-# from aiohttp import web
-from aiopg.sa.result import RowProxy
 # from multidict import MultiDict
 # from xlsxwriter import Workbook
 #
@@ -34,6 +37,26 @@ def parse_results(result: tp.List[RowProxy]) -> tp.List[tp.Dict]:
             json_result.append(result_dict)
     return json_result
 
+
+class ProxyValid(BaseModel):
+    ip: str
+    port: str
+
+
+class IgSession(BaseModel):
+    login: str
+    password: str
+
+
+async def check_req(request, service) -> dict:
+    validators = {'proxy':ProxyValid,
+                  'ig_session':IgSession}
+    try:
+        data = await request.json()
+        data = validators[service](**data)
+    except (JSONDecodeError, ValidationError):
+        raise web.HTTPBadRequest()
+    return data.dict()
 
 # def sentiment_match(sentiment=None):
 #     sentiment_list = {

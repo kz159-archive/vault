@@ -107,6 +107,9 @@ POST /ig/update
 
 
 # TODO 
-- Допиливание обновление статуса
+- <s>Допиливание обновление статуса</s>
 - Сокращение размера docker образа
 - Чистка кода
+- Healthcheck
+- docker healthcheck
+- ci/cd

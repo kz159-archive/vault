@@ -31,11 +31,15 @@ assert DB_PORT
 DB_NAME = os.getenv('DB_NAME', 'cap')
 assert DB_NAME
 
+WEB_PORT = os.getenv('WEB_PORT', '80')
+assert WEB_PORT
+
 log.info(f"Были получены следующие параметры конфигурации:\n"
          f"\tLOGLEVEL={log_level}\n"
          f"\tDATABASE_NAME={DB_NAME}\n"
          f"\tDATABASE_HOST={DB_HOST}\n"
          f"\tDATABASE_PORT={DB_PORT}\n"
          f"\tDATABASE_USER={DB_USER}\n"
-         f"\tDATABASE_PASSWORD={DB_PASSWD}")
+         f"\tDATABASE_PASSWORD={DB_PASSWD}\n"
+         f"\tWEB_PORT={WEB_PORT}")
 ##
