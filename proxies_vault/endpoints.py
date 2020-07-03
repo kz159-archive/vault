@@ -22,6 +22,8 @@ async def get_free_ig_session(request: web.Request) -> web.Response:
         ig_session.c.password,
         proxy.c.ip,
         proxy.c.port,
+        proxy.c.login,
+        proxy.c.password,
     ])
                  .select_from(ig_session
                               .join(proxy, ig_session.c.proxy_id == proxy.c.proxy_id)
@@ -87,6 +89,8 @@ async def get_free_yt_session(request: web.Request) -> web.Response:
         yt_session.c.api_key,
         proxy.c.ip,
         proxy.c.port,
+        proxy.c.login,
+        proxy.c.password,
     ])
                  .select_from(yt_session
                               .join(proxy, yt_session.c.proxy_id == proxy.c.proxy_id)
