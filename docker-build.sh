@@ -16,4 +16,4 @@ if [[ -n $1 ]]; then
 fi
 
 echo "docker register sync done"
-echo "current version is \`docker pull $REGNAME/$IMGNAME:$VERSION\`"
+echo "current version is \`docker pull $REGNAME/$IMGNAME:$VERSION-$GITBRANCH\`"

@@ -1,7 +1,22 @@
-FROM python:3.8.2-alpine3.11
-RUN apk update && apk add gcc build-base postgresql postgresql-dev
-COPY requirements.txt .
-RUN pip3 install -r requirements.txt
-WORKDIR /app
-COPY . .
-CMD python3 main.py
+FROM python:3.7-alpine as base
+
+FROM base as builder
+
+RUN mkdir /install
+
+RUN apk update && apk upgrade && \
+    apk add bash git openssh postgresql-dev gcc python3-dev musl-dev libffi libffi-dev
+
+WORKDIR /install
+
+COPY requirements.txt /requirements.txt
+RUN pip install --prefix=/install -r /requirements.txt
+
+FROM base
+
+COPY --from=builder /install /usr/local
+
+RUN apk --no-cache add libpq
+COPY proxies_vault ./
+
+CMD ["python", "main.py"]
